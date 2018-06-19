@@ -2,6 +2,7 @@ import {BrowserModule} from '@angular/platform-browser';
 import {NgModule} from '@angular/core';
 import {FormsModule} from '@angular/forms';
 import {HttpModule} from '@angular/http';
+import {Action, StoreModule} from '@ngrx/store';
 
 import {AppComponent} from './app.component';
 import {UserSelectionComponent} from './user-selection/user-selection.component';
@@ -10,6 +11,38 @@ import {MessageSectionComponent} from './message-section/message-section.compone
 import {ThreadListComponent} from './thread-list/thread-list.component';
 import {MessageListComponent} from './message-list/message-list.component';
 import {ThreadsService} from './services/threads.service';
+
+import * as _ from 'lodash';
+
+import {ApplicationState, INITIAL_APPLICATION_STATE} from './store/application-state';
+import {LOAD_USER_THREADS_ACTION, LoadUserThreadsAction} from './store/actions';
+
+
+function storeReducer(state: ApplicationState = INITIAL_APPLICATION_STATE, action: Action): ApplicationState {
+  switch (action.type) {
+    case LOAD_USER_THREADS_ACTION:
+      return handleLoadUserThreadsAction(state, action);
+
+    default:
+      return state;
+  }
+
+}
+
+function handleLoadUserThreadsAction(state: ApplicationState, action: LoadUserThreadsAction): ApplicationState {
+  const userData = action.payload;
+  const newState = Object.assign({}, state);
+
+
+  newState.storeData = {
+    participants: _.keyBy(action.payload.participants, 'id'),
+    messages: _.keyBy(action.payload.messages, 'id'),
+    threads: _.keyBy(action.payload.threads, 'id')
+  };
+
+  return newState;
+}
+
 
 @NgModule({
   declarations: [
@@ -23,7 +56,8 @@ import {ThreadsService} from './services/threads.service';
   imports: [
     BrowserModule,
     FormsModule,
-    HttpModule
+    HttpModule,
+    StoreModule.forRoot(storeReducer)
   ],
   providers: [ThreadsService],
   bootstrap: [AppComponent]
